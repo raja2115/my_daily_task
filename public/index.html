@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApexExam // Countdown & Tracker Dashboard</title>
+  <!-- Plus Jakarta Sans Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Gradients -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Header Section -->
+  <header>
+    <div class="header-container">
+      <div class="logo">
+        <i class="fa-solid fa-hourglass-half logo-icon"></i>
+        <span>Apex<span class="highlight">Exam</span></span>
+        <span class="badge">v1.0</span>
+      </div>
+
+      <!-- Top Search & Filter Bar -->
+      <div class="search-bar-container">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="searchInput" placeholder="Search exams by name, syllabus or category..." autocomplete="off">
+        <button id="clearSearchBtn" class="clear-search-btn" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Admin Mode Toggle -->
+      <div class="admin-controls">
+        <button id="adminModeBtn" class="btn btn-secondary">
+          <i class="fa-solid fa-lock-open admin-icon"></i> Admin Panel
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filter Navigation & Quick Stats -->
+  <section class="filters-stats-bar">
+    <div class="container">
+      <div class="category-filters" id="categoryFilters">
+        <button class="filter-pill active" data-category="all">All Exams</button>
+        <button class="filter-pill" data-category="Bank Exam">Bank Exams</button>
+        <button class="filter-pill" data-category="Group Exam">Group Exams</button>
+        <button class="filter-pill" data-category="Other">Others</button>
+      </div>
+      <div class="stats-pills">
+        <span class="stat-pill"><i class="fa-solid fa-calendar-days"></i> Active: <strong id="statActive">0</strong></span>
+        <span class="stat-pill"><i class="fa-solid fa-bell"></i> WhatsApp Alerts: <strong id="statAlerts" class="neon-green">ON</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Dashboard Content -->
+  <main class="container">
+    <div id="examsGrid" class="exams-grid">
+      <!-- Cards will be dynamically injected here -->
+      <div class="loading-state">
+        <i class="fa-solid fa-circle-notch fa-spin spinner"></i>
+        <p>Syncing countdown data with git database...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Notification System -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Admin Modal (Add/Edit/Delete Exam) -->
+  <div id="adminModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card glassmorphism animate-slide-in">
+      <div class="modal-header">
+        <h2 id="modalTitle"><i class="fa-solid fa-plus-circle"></i> Add New Exam</h2>
+        <button class="close-btn" id="closeModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="examForm">
+          <!-- Hidden Input for Editing ID -->
+          <input type="hidden" id="examId">
+
+          <!-- Admin Password Block (Required to commit/push) -->
+          <div class="form-group password-group">
+            <label for="adminPassword"><i class="fa-solid fa-key"></i> Admin Access Pin / Password</label>
+            <input type="password" id="adminPassword" placeholder="Enter admin password to save changes" required>
+            <small class="form-hint">Default password is <strong>admin123</strong> (Configure in your .env)</small>
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group">
+            <label for="examName">Exam / Board Name</label>
+            <input type="text" id="examName" placeholder="e.g. IBPS PO Recruitment 2026" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="examLink">Official Website URL</label>
+              <input type="url" id="examLink" placeholder="https://www.ibps.in">
+            </div>
+            <div class="form-group">
+              <label for="examCategory">Exam Category</label>
+              <select id="examCategory">
+                <option value="Bank Exam">Bank Exam</option>
+                <option value="Group Exam">Group Exam</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="examDate">Exam / Verification Target Date</label>
+            <input type="date" id="examDate">
+            <small class="form-hint">If exam date is not yet announced, leave this blank. You can update it later.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="examDescription">Syllabus Summary & Notes</label>
+            <textarea id="examDescription" rows="3" placeholder="Enter important syllabus details, application dates, document verification checklist, etc."></textarea>
+          </div>
+
+          <!-- Git Push Status Progress indicator -->
+          <div id="gitProgress" class="git-progress-container" style="display: none;">
+            <div class="progress-step-item" id="stepLocal">
+              <i class="fa-solid fa-circle-check done-icon"></i> Saving locally...
+            </div>
+            <div class="progress-step-item" id="stepGit">
+              <i class="fa-solid fa-circle-notch fa-spin sync-icon"></i> Pushing changes to remote GitHub...
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" id="deleteExamBtn" class="btn btn-danger" style="display: none;">
+              <i class="fa-solid fa-trash-can"></i> Delete Exam
+            </button>
+            <button type="button" id="cancelModalBtn" class="btn btn-cancel">Cancel</button>
+            <button type="submit" id="saveExamBtn" class="btn btn-primary">
+              <i class="fa-solid fa-floppy-disk"></i> Save & Deploy to Git
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- WhatsApp Quick Settings Panel (Floating bottom left) -->
+  <div class="whatsapp-settings-container">
+    <button class="whatsapp-trigger" id="waSettingsTrigger">
+      <i class="fa-brands fa-whatsapp"></i>
+    </button>
+    <div class="whatsapp-panel glassmorphism animate-fade-in" id="waSettingsPanel" style="display:none;">
+      <div class="wa-header">
+        <h3><i class="fa-brands fa-whatsapp"></i> Daily WhatsApp Alerts</h3>
+      </div>
+      <div class="wa-body">
+        <p>Receiving countdown alerts daily at <strong>8:00 AM</strong> on:</p>
+        <div class="wa-number"><i class="fa-solid fa-phone"></i> +91 9043389303</div>
+        <button id="testWhatsAppBtn" class="btn btn-wa-test">
+          <i class="fa-solid fa-paper-plane"></i> Send Test WhatsApp Now
+        </button>
+        <button id="triggerDailyDigestBtn" class="btn btn-wa-test secondary-wa-btn">
+          <i class="fa-solid fa-bell"></i> Send Countdown Digest Now
+        </button>
+        <small class="wa-info-text">Ensure your Callmebot API key is set in <code>.env</code> file to enable alerts.</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Chatbot Widget (Bottom Right) -->
+  <div class="chatbot-container">
+    <!-- Pulse Alert Bubble -->
+    <div class="chat-pulse" id="chatPulse">
+      <span>How many days left?</span>
+    </div>
+    <!-- Toggle Chatbot Button -->
+    <button class="chatbot-trigger" id="chatTriggerBtn">
+      <i class="fa-solid fa-comments"></i>
+      <i class="fa-solid fa-xmark close-icon" style="display:none;"></i>
+    </button>
+
+    <!-- Chat Interface Window -->
+    <div class="chat-window glassmorphism" id="chatWindow" style="display: none;">
+      <div class="chat-header">
+        <div class="chat-title-area">
+          <div class="bot-avatar">
+            <i class="fa-solid fa-robot"></i>
+            <span class="online-indicator"></span>
+          </div>
+          <div>
+            <h4>ApexAssistant</h4>
+            <small>Active Companion</small>
+          </div>
+        </div>
+      </div>
+      <!-- Suggestions tags -->
+      <div class="chat-suggestions">
+        <span class="suggestion-tag" data-query="Which exam is next?">Which exam is next?</span>
+        <span class="suggestion-tag" data-query="How many exams are pending dates?">Exams without dates?</span>
+        <span class="suggestion-tag" data-query="Give me links for exams">Exam website links</span>
+      </div>
+      <!-- Chat Body -->
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg message-bot">
+          <div class="message-content">
+            Hello Raj! I am your Exam Assistant. I know all about your scheduled exams, countdowns, and links. Ask me anything!
+          </div>
+          <span class="msg-time">Just now</span>
+        </div>
+      </div>
+      <!-- Chat Input -->
+      <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="Ask about countdowns, links, or dates..." autocomplete="off">
+        <button id="sendChatBtn"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>ApexExam // Git-synced exam tracker. Automatic WhatsApp alerts enabled.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
