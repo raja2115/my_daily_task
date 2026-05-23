@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Countdown Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <header class="glass-panel">
+        <h1>My Exam Trackers</h1>
+        <p>Stay on top of your competitive exams.</p>
+        <a href="admin.html" class="admin-link">Admin Panel</a>
+    </header>
+
+    <main id="exam-container" class="exam-container">
+        <!-- Exam cards will be generated here by JavaScript -->
+    </main>
+
+    <!-- Floating Chatbot -->
+    <div id="chatbot-container" class="chatbot-container glass-panel">
+        <div class="chatbot-header" id="chatbot-header">
+            <h3>Exam Bot</h3>
+            <span id="chatbot-toggle">+</span>
+        </div>
+        <div class="chatbot-body" id="chatbot-body">
+            <div id="chat-messages" class="chat-messages">
+                <div class="message bot-message">Hello! I can tell you about your upcoming exams. Try asking "When is the bank exam?" or "How many days left?"</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Ask about exams...">
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

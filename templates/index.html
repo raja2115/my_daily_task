@@ -54,6 +54,7 @@
       </div>
       <div class="stats-pills">
         <span class="stat-pill"><i class="fa-solid fa-calendar-days"></i> Active: <strong id="statActive">0</strong></span>
+        <span class="stat-pill"><i class="fa-solid fa-envelope"></i> Email Alerts: <strong id="statEmail" class="neon-green">ON</strong></span>
         <span class="stat-pill"><i class="fa-solid fa-bell"></i> WhatsApp Alerts: <strong id="statAlerts" class="neon-green">ON</strong></span>
       </div>
     </div>
@@ -158,25 +159,51 @@
     </div>
   </div>
 
-  <!-- WhatsApp Quick Settings Panel (Floating bottom left) -->
-  <div class="whatsapp-settings-container">
-    <button class="whatsapp-trigger" id="waSettingsTrigger">
-      <i class="fa-brands fa-whatsapp"></i>
-    </button>
-    <div class="whatsapp-panel glassmorphism animate-fade-in" id="waSettingsPanel" style="display:none;">
-      <div class="wa-header">
+  <!-- Alerts Quick Settings Control Deck (Floating bottom left) -->
+  <div class="alerts-settings-deck">
+    <!-- Trigger Buttons Stack -->
+    <div class="trigger-buttons-stack">
+      <button class="deck-trigger whatsapp-color" id="waSettingsTrigger" title="Configure WhatsApp Alerts">
+        <i class="fa-brands fa-whatsapp"></i>
+      </button>
+      <button class="deck-trigger email-color" id="emailSettingsTrigger" title="Configure Email Alerts">
+        <i class="fa-solid fa-envelope"></i>
+      </button>
+    </div>
+
+    <!-- WhatsApp Config Panel -->
+    <div class="deck-panel glassmorphism animate-fade-in" id="waSettingsPanel" style="display:none;">
+      <div class="panel-header wa-border">
         <h3><i class="fa-brands fa-whatsapp"></i> Daily WhatsApp Alerts</h3>
       </div>
-      <div class="wa-body">
+      <div class="panel-body">
         <p>Receiving countdown alerts daily at <strong>8:00 AM</strong> on:</p>
-        <div class="wa-number"><i class="fa-solid fa-phone"></i> +91 9043389303</div>
-        <button id="testWhatsAppBtn" class="btn btn-wa-test">
+        <div class="panel-number"><i class="fa-solid fa-phone"></i> +91 9043389303</div>
+        <button id="testWhatsAppBtn" class="btn btn-panel-action whatsapp-btn">
           <i class="fa-solid fa-paper-plane"></i> Send Test WhatsApp Now
         </button>
-        <button id="triggerDailyDigestBtn" class="btn btn-wa-test secondary-wa-btn">
+        <button id="triggerDailyDigestBtn" class="btn btn-panel-action secondary-panel-btn">
           <i class="fa-solid fa-bell"></i> Send Countdown Digest Now
         </button>
-        <small class="wa-info-text">Ensure your Callmebot API key is set in <code>.env</code> file to enable alerts.</small>
+        <small class="panel-info-text">Ensure your Callmebot API key is set in <code>.env</code> file to enable alerts.</small>
+      </div>
+    </div>
+
+    <!-- Email Config Panel -->
+    <div class="deck-panel glassmorphism animate-fade-in" id="emailSettingsPanel" style="display:none;">
+      <div class="panel-header email-border">
+        <h3><i class="fa-solid fa-envelope"></i> Daily Email Alerts</h3>
+      </div>
+      <div class="panel-body">
+        <p>Receiving beautifully formatted email countdowns daily at <strong>8:00 AM</strong> to:</p>
+        <div class="panel-number" style="font-size: 11px;"><i class="fa-solid fa-envelope"></i> rajalegand2115@outlook.com</div>
+        <button id="testEmailBtn" class="btn btn-panel-action email-btn">
+          <i class="fa-solid fa-paper-plane"></i> Send Test Email Now
+        </button>
+        <button id="triggerDailyEmailBtn" class="btn btn-panel-action secondary-panel-btn">
+          <i class="fa-solid fa-bell"></i> Send Email Digest Now
+        </button>
+        <small class="panel-info-text">Configure your sender credentials in <code>.env</code> under the Email settings block to enable alerts.</small>
       </div>
     </div>
   </div>
@@ -231,7 +258,7 @@
   </div>
 
   <footer>
-    <p>ApexExam // Git-synced exam tracker. Automatic WhatsApp alerts enabled.</p>
+    <p>ApexExam // Git-synced exam tracker. Automatic Email and WhatsApp alerts enabled.</p>
   </footer>
 
   <script src="/static/app.js"></script>

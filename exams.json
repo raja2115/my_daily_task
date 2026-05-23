@@ -1,29 +1,8 @@
 [
   {
     "id": "1",
-    "name": "TNPSC Group 4 Verification",
-    "link": "https://www.tnpsc.gov.in",
-    "date": "2026-06-15",
-    "category": "Group Exam",
-    "description": "Tamil Nadu Public Service Commission Group 4 certificate verification and counseling.",
-    "createdAt": "2026-05-23T11:40:00Z"
-  },
-  {
-    "id": "2",
-    "name": "SBI PO Prelims",
-    "link": "https://www.sbi.co.in/web/careers",
-    "date": "2026-10-12",
-    "category": "Bank Exam",
-    "description": "State Bank of India Probationary Officer preliminary examination.",
-    "createdAt": "2026-05-23T11:40:00Z"
-  },
-  {
-    "id": "3",
-    "name": "IBPS RRB Officer Scale I",
-    "link": "https://www.ibps.in",
-    "date": "2026-12-07",
-    "category": "Bank Exam",
-    "description": "Institute of Banking Personnel Selection Regional Rural Banks officer scale recruitment.",
-    "createdAt": "2026-05-23T11:40:00Z"
+    "name": "Sample Bank Exam",
+    "link": "https://example.com/bank",
+    "date": "2026-12-31"
   }
 ]

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Exam Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <header class="glass-panel" style="margin-bottom: 2rem;">
+        <h1>Admin Panel</h1>
+        <p>Add new exams to track</p>
+        <a href="index.html" class="admin-link">Back to Home</a>
+    </header>
+
+    <main class="glass-panel admin-container">
+        <form id="admin-form" class="admin-form">
+            <div class="form-group">
+                <label for="userId">Admin ID</label>
+                <input type="text" id="userId" placeholder="Enter admin id" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter admin password" required>
+            </div>
+            <div class="form-group" style="margin-top: 1rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+                <label for="examName">Exam Name</label>
+                <input type="text" id="examName" placeholder="e.g. SBI PO 2026" required>
+            </div>
+            <div class="form-group">
+                <label for="examLink">Website Link</label>
+                <input type="url" id="examLink" placeholder="https://..." required>
+            </div>
+            <div class="form-group">
+                <label for="examDate">Exam Date</label>
+                <input type="date" id="examDate" required>
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submit-btn">Add Exam & Auto-Push</button>
+            <div id="status-msg"></div>
+        </form>
+    </main>
+
+    <script src="admin.js"></script>
+</body>
+</html>

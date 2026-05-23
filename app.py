@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 # Import services
 from services.whatsapp_service import send_whatsapp_alert, send_daily_countdown_digest
+from services.email_service import send_email_alert, send_daily_email_digest
 from services.git_service import sync_exams_with_git
 
 load_dotenv()
@@ -176,7 +177,7 @@ def test_whatsapp():
     else:
         return jsonify({"error": "Failed to send WhatsApp message", "details": result.get('error')}), 500
 
-# 5. Trigger Daily Countdown Digest manually
+# 5. Trigger Daily Countdown Digest manually (WhatsApp)
 @app.route('/api/whatsapp/trigger-daily', methods=['POST'])
 def manual_daily_digest():
     exams = read_exams()
@@ -186,6 +187,39 @@ def manual_daily_digest():
     else:
         error_msg = result.get('error') if result else 'No active exams with dates'
         return jsonify({"error": "Failed to send daily digest", "details": error_msg}), 500
+
+# 6. Test Email alert message
+@app.route('/api/email/test', methods=['POST'])
+def test_email():
+    data = request.get_json() or {}
+    message = data.get('message', 'This is a test notification from ApexExam Email Bot!')
+    
+    html_test = f"""
+    <div style="background-color:#101426; color:#ffffff; padding:20px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); font-family:sans-serif; text-align:center;">
+        <h2 style="color:#00e5ff;">ApexExam Email Bot Connection Test</h2>
+        <p style="font-size:14px; line-height:1.5;">{message}</p>
+        <div style="background-color:rgba(0,245,212,0.1); border:1px dashed #00f5d4; border-radius:6px; padding:10px; margin-top:20px; font-weight:bold; color:#00f5d4;">
+            SUCCESS: Email configuration working correctly!
+        </div>
+    </div>
+    """
+    
+    result = send_email_alert("🔔 ApexExam Alert Connection Check", html_test)
+    if result.get('success'):
+        return jsonify({"message": "Test email sent successfully!", "response": result.get('response')})
+    else:
+        return jsonify({"error": "Failed to send test email", "details": result.get('error')}), 500
+
+# 7. Trigger Daily Email Countdown Digest manually
+@app.route('/api/email/trigger-daily', methods=['POST'])
+def manual_email_digest():
+    exams = read_exams()
+    result = send_daily_email_digest(exams)
+    if result and result.get('success'):
+        return jsonify({"message": "Daily email digest sent successfully!", "response": result.get('response')})
+    else:
+        error_msg = result.get('error') if result else 'No active exams with dates'
+        return jsonify({"error": "Failed to send email digest", "details": error_msg}), 500
 
 
 # Background Thread Scheduler for 8:00 AM alerts
@@ -198,8 +232,21 @@ def run_daily_scheduler():
             if now.hour == 8 and now.minute == 0:
                 print(f"[Scheduler Thread] Time matches 08:00 AM. Sending countdown alerts...")
                 exams_list = read_exams()
-                res = send_daily_countdown_digest(exams_list)
-                print(f"[Scheduler Thread] Digest result: {res}")
+                
+                # Send Email alerts
+                try:
+                    res_email = send_daily_email_digest(exams_list)
+                    print(f"[Scheduler Thread] Email digest result: {res_email}")
+                except Exception as ex_mail:
+                    print(f"[Scheduler Thread Error] Email digest failed: {ex_mail}")
+                
+                # Send WhatsApp alerts
+                try:
+                    res_wa = send_daily_countdown_digest(exams_list)
+                    print(f"[Scheduler Thread] WhatsApp digest result: {res_wa}")
+                except Exception as ex_wa:
+                    print(f"[Scheduler Thread Error] WhatsApp digest failed: {ex_wa}")
+                
                 # Wait 65 seconds so we don't trigger again in the same minute
                 time.sleep(65)
             else:
