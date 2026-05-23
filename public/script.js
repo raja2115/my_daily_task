@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const examContainer = document.getElementById('exam-container');
     let examsData = [];
 
-    // Fetch exams
-    fetch('/api/exams')
+    // Fetch exams from static file
+    fetch('exams.json')
         .then(response => response.json())
         .then(exams => {
             examsData = exams;
