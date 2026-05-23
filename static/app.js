@@ -15,6 +15,7 @@ const adminModal = document.getElementById('adminModal');
 const examForm = document.getElementById('examForm');
 const modalTitle = document.getElementById('modalTitle');
 const examIdInput = document.getElementById('examId');
+const adminUserIdInput = document.getElementById('adminUserId');
 const adminPasswordInput = document.getElementById('adminPassword');
 const examNameInput = document.getElementById('examName');
 const examLinkInput = document.getElementById('examLink');
@@ -54,7 +55,7 @@ function showToast(message, type = 'success') {
   }, 4000);
 }
 
-// Fetch Exams from API
+// Fetch Exams from Flask API
 async function fetchExams() {
   try {
     const res = await fetch('/api/exams');
@@ -68,7 +69,7 @@ async function fetchExams() {
     examsGrid.innerHTML = `
       <div class="loading-state">
         <i class="fa-solid fa-circle-exclamation" style="font-size: 40px; color: var(--color-danger);"></i>
-        <p style="margin-top:10px;">Failed to load exam data. Make sure the server is running.</p>
+        <p style="margin-top:10px;">Failed to load exam data. Make sure the Flask server is running.</p>
       </div>
     `;
   }
@@ -96,6 +97,7 @@ function updateAllCountdowns() {
     const targetDateStr = card.getAttribute('data-date');
     if (!targetDateStr) return;
     
+    // Ticking standard local ISO dates without offset issues
     const targetDate = new Date(targetDateStr + 'T00:00:00').getTime();
     const distance = targetDate - now;
     const digitsContainer = card.querySelector('.countdown-digits');
@@ -168,8 +170,6 @@ function renderExams() {
 
   examsGrid.innerHTML = filtered.map(exam => {
     const categoryClass = exam.category === 'Bank Exam' ? 'bank' : exam.category === 'Group Exam' ? 'group' : '';
-    
-    // Check if date is set
     const hasDate = exam.date && exam.date.trim() !== '';
     let countdownHTML = '';
     
@@ -178,7 +178,6 @@ function renderExams() {
         <div class="countdown-panel">
           <div class="countdown-label">Time Remaining</div>
           <div class="countdown-digits">
-            <!-- Ticker will inject clock here -->
             <div class="digit-box"><span class="digit-val">--</span><span class="digit-label">Days</span></div>
             <div class="digit-box"><span class="digit-val">--</span><span class="digit-label">Hrs</span></div>
             <div class="digit-box"><span class="digit-val">--</span><span class="digit-label">Min</span></div>
@@ -236,7 +235,6 @@ function renderExams() {
   updateAllCountdowns();
 }
 
-// Utility to escape HTML and prevent XSS
 function escapeHTML(str) {
   if (!str) return '';
   return str.replace(/[&<>'"]/g, 
@@ -275,9 +273,8 @@ adminModeBtn.addEventListener('click', () => {
     adminModeBtn.innerHTML = '<i class="fa-solid fa-lock admin-icon"></i> Exit Admin Mode';
     adminModeBtn.classList.remove('btn-secondary');
     adminModeBtn.classList.add('btn-primary');
-    showToast('Admin mode active. You can now edit and add exams.', 'info');
+    showToast('Admin mode active. Add new or edit exams using ID "raja" & Password "1114@"', 'info');
     
-    // Add "Add Exam" pill to filters if admin is active
     if (!document.getElementById('addExamPill')) {
       const addPill = document.createElement('button');
       addPill.id = 'addExamPill';
@@ -307,11 +304,11 @@ function openAddModal() {
   deleteExamBtn.style.display = 'none';
   gitProgress.style.display = 'none';
   
-  // Try to pre-fill admin password if saved in sessionStorage
-  const savedPassword = sessionStorage.getItem('adminPassword');
-  if (savedPassword) {
-    adminPasswordInput.value = savedPassword;
-  }
+  // Try to pre-fill admin credentials if saved in sessionStorage
+  const savedUser = sessionStorage.getItem('adminUserId');
+  const savedPass = sessionStorage.getItem('adminPassword');
+  if (savedUser) adminUserIdInput.value = savedUser;
+  if (savedPass) adminPasswordInput.value = savedPass;
   
   adminModal.style.display = 'flex';
 }
@@ -331,12 +328,10 @@ window.openEditModal = function(id) {
   deleteExamBtn.style.display = 'inline-flex';
   gitProgress.style.display = 'none';
   
-  const savedPassword = sessionStorage.getItem('adminPassword');
-  if (savedPassword) {
-    adminPasswordInput.value = savedPassword;
-  } else {
-    adminPasswordInput.value = '';
-  }
+  const savedUser = sessionStorage.getItem('adminUserId');
+  const savedPass = sessionStorage.getItem('adminPassword');
+  if (savedUser) adminUserIdInput.value = savedUser;
+  if (savedPass) adminPasswordInput.value = savedPass;
   
   adminModal.style.display = 'flex';
 };
@@ -354,9 +349,11 @@ examForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const examId = examIdInput.value;
+  const userId = adminUserIdInput.value;
   const password = adminPasswordInput.value;
   
-  // Cache password for ease of use
+  // Cache credentials for ease of subsequent operations
+  sessionStorage.setItem('adminUserId', userId);
   sessionStorage.setItem('adminPassword', password);
   
   const examData = {
@@ -386,7 +383,7 @@ examForm.addEventListener('submit', async (e) => {
     const res = await fetch('/api/exams', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ exam: examData, password })
+      body: JSON.stringify({ exam: examData, userId, password })
     });
     
     const data = await res.json();
@@ -422,6 +419,7 @@ examForm.addEventListener('submit', async (e) => {
 // Handle Exam Deletion
 deleteExamBtn.addEventListener('click', async () => {
   const id = examIdInput.value;
+  const userId = adminUserIdInput.value;
   const password = adminPasswordInput.value;
   
   if (!id) return;
@@ -441,7 +439,7 @@ deleteExamBtn.addEventListener('click', async () => {
     const res = await fetch('/api/exams/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, password })
+      body: JSON.stringify({ id, userId, password })
     });
     
     const data = await res.json();
@@ -495,7 +493,7 @@ testWhatsAppBtn.addEventListener('click', async () => {
     const res = await fetch('/api/whatsapp/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: '🔔 *ApexExam Tracker Notification Check*\n\nYour WhatsApp alert integration is connected and working!' })
+      body: JSON.stringify({ message: '🔔 *ApexExam Tracker Notification Check*\n\nYour Python WhatsApp alert integration is connected and working!' })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to send test message');
@@ -571,7 +569,6 @@ chatInput.addEventListener('keydown', (e) => {
 function appendChatMessage(content, sender = 'bot') {
   const msgDiv = document.createElement('div');
   msgDiv.className = `msg message-${sender}`;
-  
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   
   msgDiv.innerHTML = `
@@ -605,7 +602,7 @@ function handleSendMessage() {
   }, 800);
 }
 
-// Simple rule-based intelligent NLP assistant for local exams dataset
+// Intelligent chatbot NLP system in Python stack
 function generateBotReply(query) {
   const clean = query.toLowerCase();
   
@@ -633,7 +630,6 @@ function generateBotReply(query) {
       return `You don't have any exams with confirmed dates yet! Go to the Admin Panel to set dates.`;
     }
     
-    // Sort by date ascending (closest future)
     const futureExams = examsWithDates
       .map(e => ({ ...e, time: new Date(e.date + 'T00:00:00') - new Date() }))
       .filter(e => e.time >= -86400000) // Include today
@@ -664,7 +660,7 @@ function generateBotReply(query) {
     return `The following exams are waiting for dates to be announced:<br>${list}`;
   }
   
-  // WhatsApp notification details query
+  // WhatsApp details
   if (clean.includes('whatsapp') || clean.includes('alert') || clean.includes('notification') || clean.includes('number')) {
     return `Daily alerts are scheduled to send automatically at <b>8:00 AM</b> every morning.<br>
       Recipient: <b>+91 9043389303</b>.<br>
@@ -702,8 +698,6 @@ function generateBotReply(query) {
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
   fetchExams();
-  
-  // Pulse text dismiss after 6 seconds
   setTimeout(() => {
     chatPulse.style.opacity = '0';
     setTimeout(() => chatPulse.remove(), 500);

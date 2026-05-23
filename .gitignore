@@ -6,3 +6,9 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 *.log
+__pycache__/
+*.pyc
+whatsapp_sent_log.txt
+whatsapp_sent_log.txt.bak
+.pytest_cache/
+
