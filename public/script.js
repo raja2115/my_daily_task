@@ -1,134 +1,128 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const examContainer = document.getElementById('exam-container');
-    let examsData = [];
+let examsData = [];
 
-    // Fetch exams from static file
-    fetch('exams.json')
-        .then(response => response.json())
-        .then(exams => {
-            examsData = exams;
-            renderExams(exams);
-        })
-        .catch(err => {
-            console.error('Failed to fetch exams', err);
-            examContainer.innerHTML = '<p style="color:var(--danger-color);text-align:center;">Failed to load exams.</p>';
-        });
+async function loadExams() {
+  const loading = document.getElementById('loading');
+  const container = document.getElementById('exam-container');
 
-    function renderExams(exams) {
-        examContainer.innerHTML = '';
-        if (exams.length === 0) {
-            examContainer.innerHTML = '<p style="text-align:center;width:100%;color:var(--text-secondary);">No exams found. Add one in the Admin Panel.</p>';
-            return;
-        }
+  try {
+    const res = await fetch('/api/exams');
+    examsData = await res.json();
+    loading.style.display = 'none';
+    renderExams();
+  } catch (err) {
+    loading.innerHTML = '<p style="color:#ef4444;">⚠️ Could not load exams. Is the server running?</p>';
+  }
+}
 
-        const today = new Date();
-        // Sort exams by closest date
-        exams.sort((a, b) => new Date(a.date) - new Date(b.date));
+function renderExams() {
+  const container = document.getElementById('exam-container');
+  container.innerHTML = '';
 
-        exams.forEach(exam => {
-            const examDate = new Date(exam.date);
-            const diffTime = examDate.getTime() - today.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            let daysText = "Days Left";
-            let daysNum = diffDays;
+  if (!examsData.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <h2>No exams yet!</h2>
+        <p>Go to the <a href="admin.html" style="color:#60a5fa;">Admin Panel</a> to add your first exam.</p>
+      </div>`;
+    return;
+  }
 
-            if (diffDays < 0) {
-                daysText = "Passed";
-                daysNum = "0";
-            } else if (diffDays === 0) {
-                daysText = "Today!";
-                daysNum = "0";
-            }
+  const today = new Date();
+  const sorted = [...examsData].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            const card = document.createElement('div');
-            card.className = 'glass-panel exam-card';
-            card.innerHTML = `
-                <div>
-                    <h2 class="exam-title">${exam.name}</h2>
-                    <p class="exam-date-info">Date: ${examDate.toLocaleDateString()}</p>
-                    <div class="countdown-box">
-                        <div class="days-number">${daysNum}</div>
-                        <div class="days-text">${daysText}</div>
-                    </div>
-                </div>
-                <a href="${exam.link}" target="_blank" class="exam-link">Visit Website</a>
-            `;
-            examContainer.appendChild(card);
-        });
+  sorted.forEach((exam, i) => {
+    const examDate = new Date(exam.date);
+    const diffMs = examDate - today;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    let daysNum = diffDays < 0 ? 0 : diffDays;
+    let daysLabel = diffDays < 0 ? 'Exam Passed' : diffDays === 0 ? 'TODAY!' : 'Days Left';
+
+    // Progress bar: assume max 365 days
+    const totalDays = 365;
+    const elapsed = Math.max(0, totalDays - daysNum);
+    const pct = Math.min(100, (elapsed / totalDays) * 100);
+
+    const card = document.createElement('div');
+    card.className = 'exam-card';
+    card.style.animationDelay = `${i * 0.08}s`;
+    card.innerHTML = `
+      <div class="exam-name">${exam.name}</div>
+      <div class="exam-date-label">📅 ${new Date(exam.date).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'})}</div>
+      <div class="countdown">
+        <div class="days-num">${daysNum}</div>
+        <div class="days-label">${daysLabel}</div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:${pct}%"></div>
+      </div>
+      <a class="exam-link" href="${exam.link}" target="_blank" rel="noopener">🔗 Visit Official Website</a>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ── Chatbot ──────────────────────────────────────
+function toggleChat() {
+  const win = document.getElementById('chatbot-window');
+  win.classList.toggle('open');
+  document.getElementById('toggle-icon').textContent = win.classList.contains('open') ? '✕' : '💬';
+}
+
+document.getElementById('chatbot-toggle').addEventListener('click', toggleChat);
+
+function addMsg(text, isUser) {
+  const msgs = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ' + (isUser ? 'user' : 'bot');
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function handleChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  addMsg(text, true);
+  input.value = '';
+
+  const lower = text.toLowerCase();
+  setTimeout(() => {
+    if (!examsData.length) { addMsg("You have no exams added yet. Visit the Admin Panel to add some!", false); return; }
+
+    if (lower.includes('next') || lower.includes('closest')) {
+      const upcoming = examsData
+        .map(e => ({ ...e, days: Math.ceil((new Date(e.date) - new Date()) / 86400000) }))
+        .filter(e => e.days >= 0)
+        .sort((a, b) => a.days - b.days)[0];
+      if (upcoming) addMsg(`📌 Your next exam is "${upcoming.name}" in ${upcoming.days} days!`, false);
+      else addMsg('All your exams have passed! Add new ones from the Admin Panel.', false);
+    } else if (lower.includes('how many') || lower.includes('days left') || lower.includes('days remain')) {
+      const list = examsData
+        .map(e => ({ ...e, days: Math.ceil((new Date(e.date) - new Date()) / 86400000) }))
+        .filter(e => e.days >= 0)
+        .sort((a, b) => a.days - b.days);
+      if (!list.length) { addMsg('All your exams have passed!', false); return; }
+      addMsg(list.map(e => `📚 ${e.name}: ${e.days} days left`).join('\n'), false);
+    } else if (lower.includes('list') || lower.includes('all exam')) {
+      addMsg('📋 Your exams:\n' + examsData.map(e => `• ${e.name} — ${e.date}`).join('\n'), false);
+    } else if (lower.includes('hi') || lower.includes('hello') || lower.includes('hey')) {
+      addMsg('Hello! 👋 I can tell you about your upcoming exams. Try asking "Next exam?" or "Days left?"', false);
+    } else {
+      // Try to match exam name in message
+      const found = examsData.find(e => lower.includes(e.name.toLowerCase().substring(0, 5)));
+      if (found) {
+        const days = Math.ceil((new Date(found.date) - new Date()) / 86400000);
+        addMsg(`📚 ${found.name} is on ${found.date} — ${days >= 0 ? days + ' days left' : 'already passed'}.`, false);
+      } else {
+        addMsg('I can help you with exam dates and countdowns. Try "Next exam?" or "List all exams"!', false);
+      }
     }
+  }, 350);
+}
 
-    // Chatbot Logic
-    const chatbotHeader = document.getElementById('chatbot-header');
-    const chatbotBody = document.getElementById('chatbot-body');
-    const chatbotToggle = document.getElementById('chatbot-toggle');
-    const chatInput = document.getElementById('chat-input');
-    const sendBtn = document.getElementById('send-btn');
-    const chatMessages = document.getElementById('chat-messages');
+document.getElementById('chat-send').addEventListener('click', handleChat);
+document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') handleChat(); });
 
-    // Start with chatbot closed
-    chatbotBody.classList.add('hidden');
-    chatbotToggle.textContent = '+';
-
-    chatbotHeader.addEventListener('click', () => {
-        const isHidden = chatbotBody.classList.contains('hidden');
-        if (isHidden) {
-            chatbotBody.classList.remove('hidden');
-            chatbotToggle.textContent = '−';
-            chatInput.focus();
-        } else {
-            chatbotBody.classList.add('hidden');
-            chatbotToggle.textContent = '+';
-        }
-    });
-
-    function addMessage(text, isUser = false) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-        msgDiv.textContent = text;
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    function handleChat() {
-        const text = chatInput.value.trim().toLowerCase();
-        if (!text) return;
-
-        addMessage(chatInput.value, true);
-        chatInput.value = '';
-
-        // Simple bot logic
-        setTimeout(() => {
-            if (text.includes('hi') || text.includes('hello')) {
-                addMessage('Hello! How can I help you with your exams today?');
-            } else if (text.includes('how many') || text.includes('when')) {
-                if (examsData.length === 0) {
-                    addMessage("You don't have any exams tracked right now.");
-                    return;
-                }
-                // Check if a specific exam is mentioned
-                let found = false;
-                for (let exam of examsData) {
-                    if (text.includes(exam.name.toLowerCase())) {
-                        const days = Math.ceil((new Date(exam.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                        addMessage(`The ${exam.name} is on ${exam.date}. You have ${days} days left!`);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    const closest = examsData[0];
-                    const days = Math.ceil((new Date(closest.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    addMessage(`Your next exam is ${closest.name} in ${days} days!`);
-                }
-            } else {
-                addMessage("I can tell you about your upcoming exams. Ask 'When is my next exam?'");
-            }
-        }, 500);
-    }
-
-    sendBtn.addEventListener('click', handleChat);
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleChat();
-    });
-});
+loadExams();

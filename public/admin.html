@@ -4,45 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Exam Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Admin panel to add and manage exams.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="background-animation"></div>
-    
-    <header class="glass-panel" style="margin-bottom: 2rem;">
-        <h1>Admin Panel</h1>
-        <p>Add new exams to track</p>
-        <a href="index.html" class="admin-link">Back to Home</a>
+    <div class="bg-animation">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+    </div>
+
+    <header>
+        <div class="header-content">
+            <div>
+                <h1>🔧 Admin Panel</h1>
+                <p>Add new exams — auto-synced to GitHub</p>
+            </div>
+            <a href="index.html" class="btn-admin">← Back to Tracker</a>
+        </div>
     </header>
 
-    <main class="glass-panel admin-container">
-        <form id="admin-form" class="admin-form">
-            <div class="form-group">
-                <label for="userId">Admin ID (Not required anymore)</label>
-                <input type="text" id="userId" placeholder="Leave empty or enter anything" required>
-            </div>
-            <div class="form-group">
-                <label for="password">GitHub Personal Access Token (Required)</label>
-                <input type="password" id="password" placeholder="ghp_xxxxxxxxxxxxxxxxx" required>
-            </div>
-            <div class="form-group" style="margin-top: 1rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
-                <label for="examName">Exam Name</label>
-                <input type="text" id="examName" placeholder="e.g. SBI PO 2026" required>
-            </div>
-            <div class="form-group">
-                <label for="examLink">Website Link</label>
-                <input type="url" id="examLink" placeholder="https://..." required>
-            </div>
-            <div class="form-group">
-                <label for="examDate">Exam Date</label>
-                <input type="date" id="examDate" required>
-            </div>
-            
-            <button type="submit" class="submit-btn" id="submit-btn">Add Exam & Auto-Push</button>
-            <div id="status-msg"></div>
-        </form>
-    </main>
+    <div class="admin-page">
+        <div class="admin-card">
+            <h2>Add New Exam</h2>
+            <p>Fill in the details below. Credentials are required to prevent unauthorized access.</p>
+
+            <form id="admin-form">
+                <!-- Credentials -->
+                <div class="form-group">
+                    <label for="userId">Admin User ID</label>
+                    <input type="text" id="userId" placeholder="Enter your admin ID" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Admin Password</label>
+                    <input type="password" id="password" placeholder="Enter your admin password" required>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Exam Details -->
+                <div class="form-group">
+                    <label for="examName">Exam Name</label>
+                    <input type="text" id="examName" placeholder="e.g. SBI PO 2026, IBPS Clerk" required>
+                </div>
+                <div class="form-group">
+                    <label for="examLink">Official Website Link</label>
+                    <input type="url" id="examLink" placeholder="https://ibps.in" required>
+                </div>
+                <div class="form-group">
+                    <label for="examDate">Exam Date</label>
+                    <input type="date" id="examDate" required>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submit-btn">
+                    🚀 Add Exam & Push to GitHub
+                </button>
+                <div id="status-msg"></div>
+            </form>
+        </div>
+    </div>
 
     <script src="admin.js"></script>
 </body>
